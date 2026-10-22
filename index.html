@@ -1,437 +1,708 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ยืม-คืนเครื่องมือ</title>
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   :root {
-    --green: #06C755;
-    --green-dark: #05a847;
-    --red: #e5484d;
-    --amber: #f59e0b;
-    --bg: #f3f5f7;
-    --card: #ffffff;
-    --text: #1f2933;
-    --muted: #6b7280;
-    --line: #e5e7eb;
+    --bg: #f3f6f4; --card: #ffffff; --text: #16211b; --muted: #66746c; --line: #dfe6e1;
+    --brand: #06c755; --brand-d: #049a41; --on-brand: #ffffff;
+    --free-bg: #dff7e8; --free: #0a7a3a;
+    --busy-bg: #fff1d0; --busy: #8a5a00;
+    --bad: #c0362c; --shadow: 0 1px 2px rgba(0,0,0,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101513; --card: #19201d; --text: #e8efea; --muted: #94a39a; --line: #2a3430;
+      --free-bg: #12361f; --free: #6fe39a; --busy-bg: #3b2e0e; --busy: #f3c969;
+      --bad: #ff8a80; --shadow: none;
+    }
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font-family: 'Sarabun', 'Noto Sans Thai', -apple-system, 'Segoe UI', Tahoma, sans-serif;
-    font-size: 16px; padding-bottom: 84px;
-  }
-  header {
-    background: var(--green); color: #fff; padding: 16px 16px 18px;
-    padding-top: calc(16px + env(safe-area-inset-top));
-    display: flex; align-items: center; gap: 12px;
-  }
-  header img { width: 40px; height: 40px; border-radius: 50%; background: #fff3; object-fit: cover; }
-  header .hello { font-size: 13px; opacity: .9; }
-  header .name { font-size: 18px; font-weight: 700; }
-  main { padding: 14px; max-width: 560px; margin: 0 auto; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Noto Sans Thai", "Sarabun", sans-serif; font-size: 16px; }
+  button, input, textarea { font: inherit; color: inherit; }
 
-  .tab { display: none; }
-  .tab.active { display: block; }
+  header { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 12px 16px 0;
+    padding-top: max(12px, env(safe-area-inset-top)); }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  h1 { font-size: 1.15rem; margin: 0; }
+  .who { font-size: .8rem; color: var(--muted); max-width: 45vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .icon-btn { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 6px 10px; cursor: pointer; }
 
-  .scan-btn {
-    width: 100%; border: 0; border-radius: 20px; padding: 34px 16px;
-    background: var(--green); color: #fff; font-size: 22px; font-weight: 700;
-    box-shadow: 0 6px 16px #06c75540; cursor: pointer;
-    display: flex; flex-direction: column; align-items: center; gap: 10px;
-  }
-  .scan-btn:active { background: var(--green-dark); transform: scale(.99); }
-  .scan-btn svg { width: 54px; height: 54px; }
-  .scan-sub { font-size: 14px; font-weight: 400; opacity: .95; }
+  .tabs { display: flex; gap: 6px; margin-top: 10px; }
+  .tab { flex: 1; padding: 9px 8px; border: 1px solid var(--line); background: var(--card);
+    border-radius: 10px; cursor: pointer; font-weight: 600; color: var(--muted); }
+  .tab[aria-selected="true"] { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
 
-  .manual { margin-top: 16px; display: flex; gap: 8px; }
-  .manual input {
-    flex: 1; padding: 14px; border: 1.5px solid var(--line); border-radius: 12px;
-    font-size: 16px; text-transform: uppercase; background: #fff;
-  }
-  .manual button {
-    padding: 0 18px; border: 0; border-radius: 12px; background: #111827; color: #fff; font-size: 16px; cursor: pointer;
-  }
+  .tools { display: flex; gap: 8px; margin-top: 10px; }
+  .search { flex: 1; min-width: 0; padding: 10px 12px; border: 1px solid var(--line);
+    background: var(--card); border-radius: 10px; }
+  .btn { border: 0; border-radius: 10px; padding: 10px 14px; font-weight: 700; cursor: pointer;
+    background: var(--brand); color: var(--on-brand); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .btn.ghost { background: var(--card); color: var(--text); border: 1px solid var(--line); }
+  .btn.warn { background: #f59e0b; color: #1d1300; }
 
-  h3 { margin: 22px 2px 8px; font-size: 15px; color: var(--muted); font-weight: 600; }
+  .row2 { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    margin: 8px 0 10px; font-size: .85rem; color: var(--muted); }
+  .chips { display: flex; gap: 6px; }
+  .chip { border: 1px solid var(--line); background: var(--card); border-radius: 999px;
+    padding: 4px 12px; cursor: pointer; font-size: .85rem; color: var(--muted); }
+  .chip[aria-pressed="true"] { border-color: var(--brand); color: var(--brand-d); font-weight: 700; }
+  @media (prefers-color-scheme: dark) { .chip[aria-pressed="true"] { color: var(--brand); } }
+  label.cont { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 
-  .item {
-    background: var(--card); border-radius: 14px; padding: 14px; margin-bottom: 10px;
-    display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px #0000000d;
-  }
-  .item .ico {
-    width: 44px; height: 44px; border-radius: 12px; background: #e8f9ef; color: var(--green-dark);
-    display: grid; place-items: center; font-size: 22px; flex: none;
-  }
-  .item.out .ico { background: #fdecec; color: var(--red); }
-  .item .info { flex: 1; min-width: 0; }
-  .item .t { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .item .s { font-size: 13px; color: var(--muted); margin-top: 2px; }
-  .badge { font-size: 12px; padding: 4px 10px; border-radius: 99px; font-weight: 600; flex: none; }
-  .badge.free { background: #e8f9ef; color: var(--green-dark); }
-  .badge.out { background: #fdecec; color: var(--red); }
-  .item .act {
-    border: 0; border-radius: 10px; padding: 9px 14px; font-size: 14px; font-weight: 600; cursor: pointer; flex: none;
-    background: var(--green); color: #fff;
-  }
-  .item .act.ret { background: var(--amber); }
-
-  .hist {
-    background: var(--card); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
-    display: flex; gap: 12px; align-items: center;
-  }
-  .hist .tag { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 8px; flex: none; }
-  .hist .tag.b { background: #fdecec; color: var(--red); }
-  .hist .tag.r { background: #e8f9ef; color: var(--green-dark); }
-  .hist .d { font-size: 12px; color: var(--muted); }
-
+  main { padding: 0 16px 230px; }
+  .card { width: 100%; text-align: left; display: flex; gap: 12px; align-items: flex-start;
+    background: var(--card); border: 2px solid transparent; border-radius: 14px;
+    padding: 12px; margin-bottom: 10px; box-shadow: var(--shadow); cursor: pointer; }
+  .card[aria-disabled="true"] { opacity: .6; cursor: default; }
+  .card.sel { border-color: var(--brand); }
+  .tick { flex: none; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line);
+    display: grid; place-items: center; font-size: .9rem; color: transparent; margin-top: 2px; }
+  .card.sel .tick { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+  .info { flex: 1; min-width: 0; }
+  .name, .meta { display: block; }
+  .name { font-weight: 700; overflow-wrap: anywhere; }
+  .meta { font-size: .82rem; color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
+  .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .78rem;
+    background: var(--bg); border-radius: 6px; padding: 1px 6px; margin-right: 6px; }
+  .pill { flex: none; font-size: .75rem; font-weight: 700; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+  .pill.free { background: var(--free-bg); color: var(--free); }
+  .pill.busy { background: var(--busy-bg); color: var(--busy); }
   .empty { text-align: center; color: var(--muted); padding: 40px 0; }
-  .search {
-    width: 100%; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 12px; font-size: 16px; margin-bottom: 12px;
-  }
 
-  nav {
-    position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line);
-    display: flex; padding-bottom: env(safe-area-inset-bottom); z-index: 10;
-  }
-  nav button {
-    flex: 1; border: 0; background: none; padding: 10px 0 8px; color: var(--muted);
-    font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer;
-  }
-  nav button .i { font-size: 22px; line-height: 1; }
-  nav button.active { color: var(--green-dark); font-weight: 700; }
+  #bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--card);
+    border-top: 1px solid var(--line); padding: 10px 16px; padding-bottom: max(10px, env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 14px rgba(0,0,0,.08); }
+  .sum { display: flex; align-items: center; justify-content: space-between; font-size: .9rem; margin-bottom: 6px; }
+  .basket { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; max-height: 64px; overflow: auto; }
+  .bchip { display: inline-flex; align-items: center; gap: 4px; background: var(--bg); border: 1px solid var(--line);
+    border-radius: 999px; padding: 2px 4px 2px 10px; font-size: .8rem; }
+  .bchip button { border: 0; background: transparent; cursor: pointer; font-size: 1rem; line-height: 1; padding: 2px 6px; color: var(--muted); }
+  #note { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 10px;
+    padding: 8px 10px; margin-bottom: 8px; resize: none; }
+  .actions { display: flex; gap: 8px; }
+  .actions .btn { flex: 1; }
+  .hint { color: var(--muted); font-size: .85rem; text-align: center; padding: 4px 0; }
 
-  /* bottom sheet */
-  .overlay { position: fixed; inset: 0; background: #0006; display: none; z-index: 20; }
-  .overlay.show { display: block; }
-  .sheet {
-    position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-radius: 22px 22px 0 0;
-    padding: 22px 18px calc(22px + env(safe-area-inset-bottom)); z-index: 21;
-    transform: translateY(105%); transition: transform .25s ease; max-width: 560px; margin: 0 auto;
-  }
-  .sheet.show { transform: none; }
-  .sheet .big { font-size: 44px; text-align: center; }
-  .sheet h2 { margin: 6px 0 2px; text-align: center; font-size: 22px; }
-  .sheet .meta { text-align: center; color: var(--muted); font-size: 14px; margin-bottom: 14px; }
-  .sheet .warn { background: #fff7e6; color: #92400e; padding: 10px 12px; border-radius: 10px; font-size: 14px; margin-bottom: 12px; }
-  .sheet .note { width: 100%; padding: 12px; border: 1.5px solid var(--line); border-radius: 12px; font-size: 15px; margin-bottom: 12px; }
-  .btn {
-    width: 100%; border: 0; border-radius: 14px; padding: 16px; font-size: 18px; font-weight: 700; cursor: pointer;
-    background: var(--green); color: #fff; margin-bottom: 8px;
-  }
-  .btn.ret { background: var(--amber); }
-  .btn.ghost { background: #f3f4f6; color: var(--text); font-weight: 600; font-size: 16px; }
-  .btn:disabled { opacity: .6; }
+  #toast { position: fixed; left: 50%; top: max(16px, env(safe-area-inset-top)); transform: translateX(-50%);
+    background: #222; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: .9rem; z-index: 20;
+    max-width: 90vw; display: none; text-align: center; }
+  #toast.err { background: var(--bad); }
 
-  .toast {
-    position: fixed; left: 50%; top: 18px; transform: translate(-50%, -120px); transition: transform .3s;
-    background: #111827; color: #fff; padding: 12px 18px; border-radius: 12px; z-index: 40; font-size: 15px;
-    max-width: 90%; text-align: center;
-  }
-  .toast.show { transform: translate(-50%, 0); }
-  .toast.ok { background: var(--green-dark); }
-  .toast.err { background: var(--red); }
-
-  .loading { position: fixed; inset: 0; background: #fffc; display: none; place-items: center; z-index: 50; }
-  .loading.show { display: grid; }
-  .spin { width: 42px; height: 42px; border: 4px solid #d1fae5; border-top-color: var(--green); border-radius: 50%; animation: s 0.8s linear infinite; }
-  @keyframes s { to { transform: rotate(360deg); } }
-
-  #fatal { display: none; padding: 40px 24px; text-align: center; }
-  #fatal h2 { color: var(--red); }
+  #modal { position: fixed; inset: 0; z-index: 30; background: rgba(0,0,0,.5); display: none;
+    align-items: flex-end; justify-content: center; }
+  #modal.open { display: flex; }
+  .sheet { background: var(--card); width: 100%; max-width: 560px; border-radius: 18px 18px 0 0;
+    padding: 16px; padding-bottom: max(16px, env(safe-area-inset-bottom)); max-height: 80vh; overflow: auto; }
+  .sheet h2 { margin: 0 0 10px; font-size: 1.05rem; }
+  .res { display: flex; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: .92rem; }
+  .res:last-of-type { border-bottom: 0; }
+  .res .mark { flex: none; font-weight: 800; }
+  .res.ok .mark { color: var(--free); }
+  .res.fail .mark { color: var(--bad); }
+  .scanrow { display: flex; gap: 8px; margin-top: 10px; }
+  .scanrow .btn { flex: 1; padding: 11px 8px; }
+  #cam { position: fixed; inset: 0; z-index: 40; background: #000; display: none; }
+  #cam.open { display: block; }
+  #camVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; }
+  .camTop { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top));
+    background: linear-gradient(rgba(0,0,0,.65), rgba(0,0,0,0)); color: #fff; font-weight: 700; }
+  .camFrame { position: absolute; left: 50%; top: 46%; width: min(68vw, 62vh); aspect-ratio: 1; transform: translate(-50%, -50%);
+    border: 3px solid rgba(255,255,255,.95); border-radius: 22px; box-shadow: 0 0 0 100vmax rgba(0,0,0,.42); transition: border-color .15s; }
+  .camFrame.hit { border-color: var(--brand); }
+  .camFrame.miss { border-color: #ff5a4f; }
+  .camBottom { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px; padding-bottom: max(18px, env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,.7)); }
+  #camMsg { color: #fff; text-align: center; font-size: .95rem; min-height: 1.4em; max-width: 92vw; overflow-wrap: anywhere; }
+  #camMsg.err { color: #ffb4ad; }
+  .fatal { margin: 40px 16px; padding: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
 </style>
 </head>
 <body>
-
-<div id="fatal"></div>
-
-<div id="app" style="display:none">
-  <header>
-    <img id="avatar" alt="">
-    <div>
-      <div class="hello">สวัสดี</div>
-      <div class="name" id="uname">-</div>
+<header>
+  <div class="top">
+    <h1>ยืม-คืนเครื่องมือ</h1>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="who" id="who"></span>
+      <button class="icon-btn" id="refresh" title="รีเฟรช" aria-label="รีเฟรช">↻</button>
     </div>
-  </header>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-all" aria-selected="true">เครื่องมือทั้งหมด</button>
+    <button class="tab" role="tab" id="tab-mine" aria-selected="false">ของฉัน (<span id="mineCount">0</span>)</button>
+  </div>
+  <div class="tools">
+    <input class="search" id="q" type="search" placeholder="ค้นหา ชื่อ / รหัส / S/N / หมวดหมู่" autocomplete="off">
+  </div>
+  <div class="scanrow">
+    <button class="btn" id="scanFast">📷 สแกนเร็ว (กล้องในหน้า)</button>
+    <button class="btn ghost" id="scan" hidden>สแกนด้วย LINE</button>
+  </div>
+  <div class="row2">
+    <div class="chips" id="chips">
+      <button class="chip" data-f="all" aria-pressed="true">ทั้งหมด</button>
+      <button class="chip" data-f="free" aria-pressed="false">ว่าง</button>
+      <button class="chip" data-f="busy" aria-pressed="false">ถูกยืม</button>
+    </div>
+    <label class="cont" id="contWrap" hidden><input type="checkbox" id="cont" checked> สแกนต่อเนื่อง</label>
+  </div>
+</header>
 
-  <main>
-    <!-- สแกน -->
-    <section class="tab active" id="tab-scan">
-      <button class="scan-btn" id="btnScan">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/>
-          <rect x="8" y="8" width="3" height="3"/><rect x="13" y="8" width="3" height="3"/>
-          <rect x="8" y="13" width="3" height="3"/><path d="M14 14h2v2h-2z"/>
-        </svg>
-        สแกน QR Code
-        <span class="scan-sub">สแกนเครื่องมือเพื่อ ยืม หรือ คืน</span>
-      </button>
+<main id="list"><div class="empty">กำลังโหลด…</div></main>
 
-      <div class="manual">
-        <input id="manualId" placeholder="หรือพิมพ์รหัส เช่น T001" autocapitalize="characters" autocomplete="off">
-        <button id="btnManual">ค้นหา</button>
-      </div>
-
-      <h3>เครื่องมือที่ฉันยืมอยู่</h3>
-      <div id="miniMine"></div>
-    </section>
-
-    <!-- ของฉัน -->
-    <section class="tab" id="tab-mine">
-      <h3 style="margin-top:4px">เครื่องมือที่ฉันยืมอยู่</h3>
-      <div id="mineList"></div>
-    </section>
-
-    <!-- ทั้งหมด -->
-    <section class="tab" id="tab-all">
-      <input class="search" id="search" placeholder="ค้นหาชื่อ / รหัส / หมวดหมู่">
-      <div id="allList"></div>
-    </section>
-
-    <!-- ประวัติ -->
-    <section class="tab" id="tab-hist">
-      <h3 style="margin-top:4px">ประวัติล่าสุดของฉัน</h3>
-      <div id="histList"></div>
-    </section>
-  </main>
-
-  <nav>
-    <button class="active" data-tab="scan"><span class="i">📷</span>สแกน</button>
-    <button data-tab="mine"><span class="i">🧰</span>ของฉัน</button>
-    <button data-tab="all"><span class="i">📋</span>ทั้งหมด</button>
-    <button data-tab="hist"><span class="i">🕘</span>ประวัติ</button>
-  </nav>
+<div id="bar" hidden>
+  <div class="sum"><span id="sumText"></span><button class="icon-btn" id="clear">ล้างทั้งหมด</button></div>
+  <div class="basket" id="basket"></div>
+  <textarea id="note" rows="2" maxlength="300" placeholder="หมายเหตุตอนคืน (ถ้ามี) เช่น สภาพเครื่อง ชำรุด ขาดอุปกรณ์" hidden></textarea>
+  <div class="actions">
+    <button class="btn" id="doBorrow" hidden></button>
+    <button class="btn warn" id="doReturn" hidden></button>
+  </div>
 </div>
 
-<!-- sheet ยืน/คืน -->
-<div class="overlay" id="overlay"></div>
-<div class="sheet" id="sheet">
-  <div class="big" id="sIcon">🔧</div>
-  <h2 id="sName">-</h2>
-  <div class="meta" id="sMeta">-</div>
-  <div class="warn" id="sWarn" style="display:none"></div>
-  <input class="note" id="sNote" placeholder="หมายเหตุ (ไม่บังคับ)">
-  <button class="btn" id="sAct">ยืม</button>
-  <button class="btn ghost" id="sCancel">ยกเลิก</button>
+<div id="cam" role="dialog" aria-label="สแกน QR">
+  <video id="camVideo" playsinline muted autoplay></video>
+  <div class="camTop"><span>สแกน QR · เลือกแล้ว <b id="camCount">0</b> ชิ้น</span><button class="btn" id="camClose">เสร็จสิ้น</button></div>
+  <div class="camFrame" id="camFrame"></div>
+  <div class="camBottom"><div id="camMsg"></div><button class="btn ghost" id="camTorch" hidden>🔦 ไฟฉาย</button></div>
 </div>
 
-<div class="toast" id="toast"></div>
-<div class="loading" id="loading"><div class="spin"></div></div>
+<div id="toast"></div>
+<div id="modal"><div class="sheet" id="sheet"></div></div>
 
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
-/* ======================= ตั้งค่า (แก้ 2 บรรทัดนี้) ======================= */
-const LIFF_ID = '2012083611-XFk0ry1Q';            // เช่น 1234567890-AbCdEfGh
-const API_URL = 'https://script.google.com/macros/s/AKfycbzkOrvGQrzTqOYs8iUhQBWU4gr8ZNhHR8X7i3yBUybR6HsaIU7KnyZ5ghXheo46kYPWcw/exec'; // ลงท้ายด้วย /exec
-/* ======================================================================== */
+// ============ ตั้งค่า 2 ค่านี้ก่อนใช้งาน ============
+var CONFIG = {
+  LIFF_ID: '2012136670-ldgkMBdO',            // เช่น 1234567890-AbcdEfgh
+  API_URL: 'https://script.google.com/macros/s/AKfycbyo_K-TgkVOC2Vb3ADbfe8kxWNFDH4Kw6ZXLCzypANRvW0F7HPgBHg4569enGf8Ul9kBg/exec' // URL ของ Apps Script (ไม่ต้องมี ?key=)
+};
+// ===================================================
 
-let me = { id: '', name: '' };
-let allTools = [];
-let current = null;
+(function () {
+  'use strict';
 
-const $ = id => document.getElementById(id);
-const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  var ERRORS = {
+    NO_TOKEN: 'ไม่พบ ID token ตรวจว่า LIFF ตั้ง Scope openid และ profile แล้ว',
+    INVALID_TOKEN: 'ยืนยันตัวตนไม่สำเร็จ ตรวจว่า LIFF ID ในชีต Config ช่อง B3 ตรงกับที่ใช้ในหน้านี้',
+    LIFF_NOT_CONFIGURED: 'ยังไม่ได้ใส่ LIFF ID ในชีต Config ช่อง B3',
+    BAD_REQUEST: 'คำขอไม่ถูกต้อง',
+    TOO_MANY_ITEMS: 'เลือกได้ครั้งละไม่เกิน 30 ชิ้น',
+    UNKNOWN_ACTION: 'คำสั่งไม่ถูกต้อง'
+  };
 
-/* ---------- API ---------- */
-async function api(action, payload) {
-  const idToken = liff.getIDToken();
-  const res = await fetch(API_URL, {
-    method: 'POST',                       // ไม่ใส่ header เพื่อเลี่ยง CORS preflight
-    body: JSON.stringify(Object.assign({ action, idToken }, payload || {})),
-  });
-  const json = await res.json();
-  if (!json.ok) {
-    if (json.auth) { liff.logout(); liff.login(); }
-    throw new Error(json.error || 'เกิดข้อผิดพลาด');
+  var state = {
+    tools: [], me: { name: '', isAdmin: false },
+    tab: 'all', filter: 'all', q: '',
+    basket: [],            // รหัสเครื่องมือที่เลือก (ตามลำดับที่เพิ่ม)
+    busy: false, canScan: false, scanning: false
+  };
+
+  var cam = { running: false, opening: false, stream: null, video: null, canvas: null, ctx: null, detector: null, last: '', lastT: 0, torch: false };
+
+  function $(s) { return document.querySelector(s); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
   }
-  return json.data;
-}
 
-/* ---------- UI helpers ---------- */
-function toast(msg, type) {
-  const t = $('toast');
-  t.textContent = msg;
-  t.className = 'toast show ' + (type || '');
-  clearTimeout(toast.t);
-  toast.t = setTimeout(() => t.classList.remove('show'), 2800);
-}
-function busy(on) { $('loading').classList.toggle('show', on); }
-function fatal(msg) {
-  $('app').style.display = 'none';
-  $('fatal').style.display = 'block';
-  $('fatal').innerHTML = '<h2>เปิดแอปไม่สำเร็จ</h2><p>' + esc(msg) + '</p>';
-}
+  // ---------- ข้อความแจ้งเตือน ----------
+  var toastTimer = null;
+  function toast(msg, isErr) {
+    var t = $('#toast');
+    t.textContent = msg;
+    t.className = isErr ? 'err' : '';
+    t.style.display = 'block';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.style.display = 'none'; }, isErr ? 4500 : 2200);
+    if (cam.running) camSay(msg, isErr);
+  }
+  function fatal(msg) {
+    document.body.innerHTML = '<div class="fatal"><b>ใช้งานไม่ได้</b><p>' + esc(msg) + '</p></div>';
+  }
 
-document.querySelectorAll('nav button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
-function showTab(name) {
-  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
-  if (name === 'mine') loadMine();
-  if (name === 'all') loadAll();
-  if (name === 'hist') loadHist();
-  if (name === 'scan') loadMine();
-}
+  // ---------- เรียก API (Apps Script) ----------
+  function relogin() {
+    try { liff.logout(); } catch (e) {}
+    liff.login({ redirectUri: location.href });
+  }
 
-/* ---------- แสดงรายการ ---------- */
-function itemHtml(t, withAction) {
-  const out = t.status === 'ถูกยืม';
-  const mineNow = out && t.borrowerId === me.id;
-  let sub = esc(t.id) + (t.category ? ' · ' + esc(t.category) : '');
-  if (out) sub += '<br>ยืมโดย ' + (mineNow ? 'คุณ' : esc(t.borrower)) + (t.since ? ' · ' + esc(t.since) : '');
-  let btn = '';
-  if (withAction) btn = '<button class="act ' + (out ? 'ret' : '') + '" data-id="' + esc(t.id) + '">' + (out ? 'คืน' : 'ยืม') + '</button>';
-  else btn = '<span class="badge ' + (out ? 'out' : 'free') + '">' + (out ? 'ถูกยืม' : 'ว่าง') + '</span>';
-  return '<div class="item ' + (out ? 'out' : '') + '"><div class="ico">' + (out ? '🔒' : '🔧') + '</div>' +
-    '<div class="info"><div class="t">' + esc(t.name) + '</div><div class="s">' + sub + '</div></div>' + btn + '</div>';
-}
-function bindActions(root) {
-  root.querySelectorAll('.act').forEach(b => b.onclick = () => openTool(b.dataset.id));
-}
+  async function api(action, payload) {
+    var body = Object.assign({ action: action, idToken: liff.getIDToken() }, payload || {});
+    var res;
+    try {
+      // ใช้ text/plain เพื่อเลี่ยง CORS preflight ซึ่ง Apps Script ไม่รองรับ
+      res = await fetch(CONFIG.API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(body)
+      });
+    } catch (e) {
+      throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจอินเทอร์เน็ตและ API_URL แล้วลองใหม่');
+    }
+    var data;
+    try { data = await res.json(); } catch (e) {
+      throw new Error('เซิร์ฟเวอร์ตอบกลับผิดรูปแบบ ตรวจว่า Deploy เป็น Web app แบบ Anyone และใช้ URL ที่ลงท้าย /exec');
+    }
+    if (!data.ok) {
+      if (data.error === 'TOKEN_EXPIRED') {
+        relogin();
+        throw new Error('เซสชันหมดอายุ กำลังเข้าสู่ระบบใหม่…');
+      }
+      throw new Error(ERRORS[data.error] || data.error || 'เกิดข้อผิดพลาด');
+    }
+    return data;
+  }
 
-async function loadMine() {
-  try {
-    const list = await api('mine');
-    const html = list.length ? list.map(t => itemHtml(t, true)).join('') : '<div class="empty">ตอนนี้ไม่ได้ยืมเครื่องมือไว้</div>';
-    $('mineList').innerHTML = html;
-    $('miniMine').innerHTML = html;
-    bindActions($('mineList')); bindActions($('miniMine'));
-  } catch (e) { toast(e.message, 'err'); }
-}
+  // ---------- ข้อมูล ----------
+  function findTool(id) {
+    var k = String(id).trim().toLowerCase();
+    for (var i = 0; i < state.tools.length; i++) {
+      if (state.tools[i].id.toLowerCase() === k) return state.tools[i];
+    }
+    return null;
+  }
+  function kindOf(t) {
+    if (!t.busy) return 'free';
+    if (t.mine) return 'mine';
+    return state.me.isAdmin ? 'admin' : 'other';
+  }
 
-async function loadAll() {
-  busy(true);
-  try {
-    allTools = await api('list');
-    renderAll();
-  } catch (e) { toast(e.message, 'err'); }
-  busy(false);
-}
-function renderAll() {
-  const q = $('search').value.trim().toLowerCase();
-  const list = allTools.filter(t => !q || [t.id, t.name, t.category].join(' ').toLowerCase().includes(q));
-  $('allList').innerHTML = list.length ? list.map(t => itemHtml(t, false)).join('') : '<div class="empty">ไม่พบรายการ</div>';
-  $('allList').querySelectorAll('.item').forEach((el, i) => el.onclick = () => openTool(list[i].id));
-}
-$('search').oninput = renderAll;
+  async function refresh() {
+    var d = await api('list');
+    state.me = d.user;
+    state.tools = d.tools;
+    state.basket = state.basket.filter(function (id) {
+      var t = findTool(id);
+      return t && kindOf(t) !== 'other';
+    });
+    render();
+  }
 
-async function loadHist() {
-  busy(true);
-  try {
-    const rows = await api('history');
-    $('histList').innerHTML = rows.length ? rows.map(r =>
-      '<div class="hist"><span class="tag ' + (r.action === 'ยืม' ? 'b' : 'r') + '">' + esc(r.action) + '</span>' +
-      '<div><div><b>' + esc(r.name) + '</b> <span class="d">(' + esc(r.id) + ')</span></div>' +
-      '<div class="d">' + esc(r.time) + (r.note ? ' · ' + esc(r.note) : '') + '</div></div></div>'
-    ).join('') : '<div class="empty">ยังไม่มีประวัติ</div>';
-  } catch (e) { toast(e.message, 'err'); }
-  busy(false);
-}
+  // ---------- วาดหน้าจอ ----------
+  function visibleTools() {
+    var q = state.q.trim().toLowerCase();
+    return state.tools.filter(function (t) {
+      if (state.tab === 'mine') return t.mine;
+      if (state.filter === 'free' && t.busy) return false;
+      if (state.filter === 'busy' && !t.busy) return false;
+      if (!q) return true;
+      return (t.id + ' ' + t.name + ' ' + t.cat + ' ' + t.sn + ' ' + t.borrower).toLowerCase().indexOf(q) >= 0;
+    });
+  }
 
-/* ---------- สแกน / ค้นหา ---------- */
-$('btnScan').onclick = async () => {
-  try {
-    if (!liff.isInClient()) {
-      toast('การสแกนใช้ได้ในแอป LINE เท่านั้น — พิมพ์รหัสแทนได้', 'err');
-      $('manualId').focus();
+  function render() {
+    $('#who').textContent = state.me.name + (state.me.isAdmin ? ' (แอดมิน)' : '');
+    $('#mineCount').textContent = state.tools.filter(function (t) { return t.mine; }).length;
+    $('#tab-all').setAttribute('aria-selected', state.tab === 'all');
+    $('#tab-mine').setAttribute('aria-selected', state.tab === 'mine');
+    $('#chips').style.display = state.tab === 'all' ? 'flex' : 'none';
+
+    var list = visibleTools();
+    var html = list.map(function (t) {
+      var kind = kindOf(t);
+      var sel = state.basket.indexOf(t.id) >= 0;
+      var disabled = kind === 'other';
+      var pill = t.busy
+        ? '<span class="pill busy">' + (t.mine ? 'คุณยืมอยู่' : 'ถูกยืม') + '</span>'
+        : '<span class="pill free">ว่าง</span>';
+      var line2 = [];
+      if (t.cat) line2.push(esc(t.cat));
+      if (t.sn) line2.push('S/N: ' + esc(t.sn));
+      var line3 = t.busy ? 'ผู้ยืม: ' + esc(t.borrower) + ' · ตั้งแต่ ' + esc(t.since) : '';
+      return '<button class="card' + (sel ? ' sel' : '') + '" data-id="' + esc(t.id) + '"' +
+        (disabled ? ' aria-disabled="true"' : '') + '>' +
+        '<span class="tick">✓</span>' +
+        '<span class="info"><span class="name"><span class="code">' + esc(t.id) + '</span>' + esc(t.name) + '</span>' +
+        (line2.length ? '<span class="meta">' + line2.join(' · ') + '</span>' : '') +
+        (line3 ? '<span class="meta">' + line3 + '</span>' : '') + '</span>' + pill + '</button>';
+    }).join('');
+    $('#list').innerHTML = html ||
+      '<div class="empty">' + (state.tab === 'mine' ? 'คุณไม่ได้ยืมเครื่องมือใดอยู่' : 'ไม่พบเครื่องมือที่ตรงกับเงื่อนไข') + '</div>';
+    renderBar();
+  }
+
+  function splitBasket() {
+    var borrow = [], ret = [];
+    state.basket.forEach(function (id) {
+      var t = findTool(id);
+      if (!t) return;
+      var k = kindOf(t);
+      if (k === 'free') borrow.push(t.id);
+      else if (k === 'mine' || k === 'admin') ret.push(t.id);
+    });
+    return { borrow: borrow, ret: ret };
+  }
+
+  function renderBar() {
+    var bar = $('#bar');
+    var n = state.basket.length;
+    bar.hidden = n === 0;
+    document.querySelector('main').style.paddingBottom = n ? '230px' : '24px';
+    if (!n) return;
+    var s = splitBasket();
+    $('#sumText').textContent = 'เลือกแล้ว ' + n + ' ชิ้น';
+    $('#basket').innerHTML = state.basket.map(function (id) {
+      return '<span class="bchip">' + esc(id) + '<button data-rm="' + esc(id) + '" aria-label="เอาออก">×</button></span>';
+    }).join('');
+    var b = $('#doBorrow'), r = $('#doReturn');
+    b.hidden = s.borrow.length === 0;
+    r.hidden = s.ret.length === 0;
+    b.textContent = 'ยืม ' + s.borrow.length + ' ชิ้น';
+    r.textContent = 'คืน ' + s.ret.length + ' ชิ้น';
+    b.disabled = r.disabled = state.busy;
+    $('#note').hidden = s.ret.length === 0;
+  }
+
+  // ---------- ตะกร้า ----------
+  function toggle(id) {
+    var i = state.basket.indexOf(id);
+    if (i >= 0) state.basket.splice(i, 1); else state.basket.push(id);
+    render();
+  }
+
+  function addScanned(raw) {
+    var id = parseToolId(raw, false);
+    var t = findTool(id);
+    if (!t) { toast('ไม่พบเครื่องมือ: ' + id, true); return false; }
+    if (kindOf(t) === 'other') { toast(t.id + ' ถูกยืมโดย ' + t.borrower, true); return false; }
+    if (state.basket.indexOf(t.id) >= 0) { toast(t.id + ' อยู่ในรายการแล้ว'); return true; }
+    state.basket.push(t.id);
+    render();
+    toast('เพิ่ม ' + t.id + ' ' + t.name + (t.busy ? ' (คืน)' : ' (ยืม)'));
+    return true;
+  }
+
+  // อ่านรหัสเครื่องมือจากค่าใน QR (ลิงก์ LIFF, ลิงก์แชทแบบเดิม หรือข้อความ TOOL:xxx)
+  function parseToolId(v, strict) {
+    v = String(v == null ? '' : v).trim();
+    try {
+      var u = new URL(v);
+      var t = u.searchParams.get('tool');
+      if (t) return t.trim();
+      var st = u.searchParams.get('liff.state');
+      if (st) {
+        var m = decodeURIComponent(st).match(/[?&]tool=([^&]+)/);
+        if (m) return decodeURIComponent(m[1]).trim();
+      }
+      var m2 = decodeURIComponent(u.search.replace(/^\?/, '')).match(/^TOOL\s*[:：]\s*(.+)$/i);
+      if (m2) return m2[1].trim();
+      if (strict) return null;
+    } catch (e) { if (strict) return null; }
+    var m3 = v.match(/^TOOL\s*[:：]\s*(.+)$/i);
+    if (m3) return m3[1].trim();
+    return strict ? null : v;
+  }
+
+  // ---------- สแกนเร็ว: กล้องในหน้าเว็บ (เปิดค้างไว้ สแกนต่อเนื่อง ไม่ต้องปิด-เปิดทุกชิ้น) ----------
+  var JSQR_URLS = [
+    'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js',
+    'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'
+  ];
+  var audioCtx = null;
+
+  function loadScript(url) {
+    return new Promise(function (ok, fail) {
+      var el = document.createElement('script');
+      el.src = url;
+      el.onload = ok;
+      el.onerror = function () { fail(new Error('load ' + url)); };
+      document.head.appendChild(el);
+    });
+  }
+
+  // ใช้ตัวอ่าน QR ของเครื่อง (BarcodeDetector) ถ้ามี ไม่มีก็ใช้ jsQR
+  async function ensureDecoder() {
+    if (cam.detector) return;
+    if ('BarcodeDetector' in window) {
+      try {
+        var fmts = await window.BarcodeDetector.getSupportedFormats();
+        if (fmts.indexOf('qr_code') >= 0) {
+          cam.detector = { kind: 'native', det: new window.BarcodeDetector({ formats: ['qr_code'] }) };
+          return;
+        }
+      } catch (e) { /* ใช้ jsQR แทน */ }
+    }
+    for (var i = 0; i < JSQR_URLS.length && typeof window.jsQR !== 'function'; i++) {
+      try { await loadScript(JSQR_URLS[i]); } catch (e) { /* ลองแหล่งถัดไป */ }
+    }
+    if (typeof window.jsQR !== 'function') throw new Error('LOAD_DECODER');
+    cam.detector = { kind: 'jsqr' };
+  }
+
+  function initAudio() {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch (e) {}
+  }
+  function beep(good) {
+    try {
+      if (audioCtx) {
+        var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.frequency.value = good ? 880 : 300;
+        g.gain.value = 0.08;
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(); o.stop(audioCtx.currentTime + 0.09);
+      }
+    } catch (e) {}
+    try { if (navigator.vibrate) navigator.vibrate(good ? 40 : [60, 40, 60]); } catch (e) {}
+  }
+
+  function camSay(msg, isErr) {
+    var m = $('#camMsg');
+    m.textContent = msg;
+    m.className = isErr ? 'err' : '';
+  }
+
+  function camErrorText(e) {
+    var n = e && e.name;
+    if (e && e.message === 'LOAD_DECODER') return 'โหลดตัวอ่าน QR ไม่สำเร็จ ตรวจอินเทอร์เน็ตแล้วลองใหม่ หรือใช้ปุ่ม "สแกนด้วย LINE"';
+    if (n === 'NotAllowedError' || n === 'SecurityError') return 'ไม่ได้รับอนุญาตให้ใช้กล้อง เปิดสิทธิ์กล้องของแอป LINE ในตั้งค่ามือถือ หรือใช้ปุ่ม "สแกนด้วย LINE"';
+    if (n === 'NotFoundError' || n === 'OverconstrainedError') return 'ไม่พบกล้องที่ใช้ได้ในเครื่องนี้';
+    if (n === 'NotReadableError') return 'กล้องถูกใช้งานโดยแอปอื่นอยู่ ปิดแอปนั้นแล้วลองใหม่';
+    return 'เปิดกล้องไม่สำเร็จ' + (e && e.message ? ': ' + e.message : '') + ' ลองปุ่ม "สแกนด้วย LINE" แทน';
+  }
+
+  async function openCam() {
+    if (cam.running || cam.opening) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      toast('แอปหรือเครื่องนี้ไม่รองรับกล้องในหน้าเว็บ ใช้ปุ่ม "สแกนด้วย LINE" แทน', true);
       return;
     }
-    const r = await liff.scanCodeV2();
-    if (r && r.value) openTool(r.value);
-  } catch (e) {
-    toast('สแกนไม่สำเร็จ: ' + (e.message || e), 'err');
-  }
-};
-$('btnManual').onclick = () => {
-  const v = $('manualId').value.trim();
-  if (v) openTool(v);
-};
-$('manualId').onkeydown = e => { if (e.key === 'Enter') $('btnManual').click(); };
-
-/* ---------- sheet ---------- */
-async function openTool(raw) {
-  // รองรับ QR ที่เป็น URL ที่มี ?tool=รหัส
-  let id = String(raw).trim();
-  try { const u = new URL(id); id = u.searchParams.get('tool') || id; } catch (e) {}
-  busy(true);
-  try {
-    current = await api('getTool', { id });
-    renderSheet();
-  } catch (e) { toast(e.message, 'err'); }
-  busy(false);
-}
-
-function renderSheet() {
-  const t = current;
-  const out = t.status === 'ถูกยืม';
-  const mineNow = out && t.borrowerId === me.id;
-  $('sIcon').textContent = out ? '🔒' : '🔧';
-  $('sName').textContent = t.name;
-  $('sMeta').textContent = t.id + (t.category ? ' · ' + t.category : '') + ' · ' + (out ? 'ถูกยืม' : 'ว่าง');
-  const w = $('sWarn');
-  if (out && !mineNow) {
-    w.style.display = 'block';
-    w.textContent = 'เครื่องมือนี้ถูก ' + t.borrower + ' ยืมไว้เมื่อ ' + t.since + ' — หากคืนแทน ระบบจะบันทึกว่าคุณเป็นผู้คืน';
-  } else if (mineNow) {
-    w.style.display = 'block';
-    w.textContent = 'คุณยืมไว้เมื่อ ' + t.since;
-  } else { w.style.display = 'none'; }
-  const b = $('sAct');
-  b.textContent = out ? 'ยืนยันการคืน' : 'ยืนยันการยืม';
-  b.className = 'btn ' + (out ? 'ret' : '');
-  b.disabled = false;
-  $('sNote').value = '';
-  $('overlay').classList.add('show');
-  $('sheet').classList.add('show');
-}
-function closeSheet() {
-  $('overlay').classList.remove('show');
-  $('sheet').classList.remove('show');
-}
-$('overlay').onclick = closeSheet;
-$('sCancel').onclick = closeSheet;
-
-$('sAct').onclick = async () => {
-  if (!current) return;
-  const out = current.status === 'ถูกยืม';
-  const b = $('sAct');
-  b.disabled = true;
-  busy(true);
-  try {
-    await api(out ? 'ret' : 'borrow', { id: current.id, note: $('sNote').value.trim() });
-    closeSheet();
-    toast((out ? 'คืน ' : 'ยืม ') + current.name + ' เรียบร้อย ✓', 'ok');
-    $('manualId').value = '';
-    loadMine();
-    if ($('tab-all').classList.contains('active')) loadAll();
-  } catch (e) {
-    toast(e.message, 'err');
-    b.disabled = false;
-  }
-  busy(false);
-};
-
-/* ---------- เริ่มต้น ---------- */
-(async function init() {
-  try {
-    if (LIFF_ID.indexOf('ใส่') === 0 || API_URL.indexOf('ใส่') === 0) {
-      return fatal('ยังไม่ได้ตั้งค่า LIFF_ID และ API_URL ในไฟล์ index.html');
+    cam.opening = true;
+    initAudio(); // ต้องเริ่มจากการกดปุ่มของผู้ใช้ (ข้อกำหนดของ iOS)
+    $('#cam').classList.add('open');
+    $('#camCount').textContent = state.basket.length;
+    camSay('กำลังเปิดกล้อง…');
+    var results = await Promise.allSettled([
+      ensureDecoder(),
+      navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      })
+    ]);
+    var stream = results[1].status === 'fulfilled' ? results[1].value : null;
+    var failure = results[0].status === 'rejected' ? results[0].reason : results[1].status === 'rejected' ? results[1].reason : null;
+    if (failure) {
+      if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
+      cam.opening = false;
+      $('#cam').classList.remove('open');
+      toast(camErrorText(failure), true);
+      return;
     }
-    await liff.init({ liffId: LIFF_ID });
-    if (!liff.isLoggedIn()) { liff.login(); return; }
-    const p = await liff.getProfile();
-    me = { id: p.userId, name: p.displayName };
-    $('uname').textContent = p.displayName;
-    if (p.pictureUrl) $('avatar').src = p.pictureUrl;
-    $('app').style.display = 'block';
-    loadMine();
-
-    // เปิดผ่านลิงก์ที่มี ?tool=รหัส (เช่น QR แบบ URL)
-    const q = new URLSearchParams(location.search).get('tool');
-    if (q) openTool(q);
-  } catch (e) {
-    fatal(e.message || e);
+    cam.stream = stream;
+    var v = $('#camVideo');
+    v.srcObject = stream;
+    v.muted = true;
+    try { await v.play(); } catch (e) { /* บางเครื่องเล่นอัตโนมัติ */ }
+    cam.video = v;
+    cam.canvas = cam.canvas || document.createElement('canvas');
+    cam.ctx = cam.canvas.getContext('2d', { willReadFrequently: true });
+    cam.last = ''; cam.lastT = 0; cam.torch = false;
+    var track = stream.getVideoTracks()[0];
+    var caps = track && track.getCapabilities ? track.getCapabilities() : null;
+    $('#camTorch').hidden = !(caps && caps.torch);
+    cam.running = true;
+    cam.opening = false;
+    camSay('วาง QR ในกรอบ จะอ่านต่อเนื่องจนกว่าจะกด "เสร็จสิ้น"');
+    camLoop();
   }
+
+  function closeCam() {
+    var wasRunning = cam.running;
+    cam.running = false;
+    cam.opening = false;
+    if (cam.stream) cam.stream.getTracks().forEach(function (t) { t.stop(); });
+    cam.stream = null;
+    var v = $('#camVideo');
+    try { v.pause(); } catch (e) {}
+    v.srcObject = null;
+    $('#cam').classList.remove('open');
+    if (wasRunning) render();
+  }
+
+  async function decodeFrame() {
+    var v = cam.video;
+    if (!v || !v.videoWidth) return null;
+    if (cam.detector.kind === 'native') {
+      var found = await cam.detector.det.detect(v);
+      return found.length ? found[0].rawValue : null;
+    }
+    var scale = Math.min(1, 720 / v.videoWidth);
+    var w = Math.round(v.videoWidth * scale), h = Math.round(v.videoHeight * scale);
+    if (cam.canvas.width !== w || cam.canvas.height !== h) { cam.canvas.width = w; cam.canvas.height = h; }
+    cam.ctx.drawImage(v, 0, 0, w, h);
+    var img = cam.ctx.getImageData(0, 0, w, h);
+    var res = await window.jsQR(img.data, w, h, { inversionAttempts: 'dontInvert' });
+    return res ? res.data : null;
+  }
+
+  async function camLoop() {
+    while (cam.running) {
+      var t0 = performance.now(), val = null;
+      try { val = await decodeFrame(); } catch (e) { val = null; }
+      if (val && cam.running) onCamValue(val);
+      var spent = performance.now() - t0;
+      await new Promise(function (ok) { setTimeout(ok, Math.max(30, 90 - spent)); });
+    }
+  }
+
+  function onCamValue(val) {
+    var now = Date.now();
+    var same = val === cam.last && now - cam.lastT < 3000;
+    cam.last = val;
+    cam.lastT = now; // ขณะที่ QR ยังอยู่ในกรอบ จะไม่เพิ่มซ้ำ
+    if (same) return;
+    var good = addScanned(val);
+    $('#camCount').textContent = state.basket.length;
+    beep(good);
+    var f = $('#camFrame');
+    f.className = 'camFrame ' + (good ? 'hit' : 'miss');
+    setTimeout(function () { f.className = 'camFrame'; }, 350);
+  }
+
+  async function toggleTorch() {
+    try {
+      var track = cam.stream.getVideoTracks()[0];
+      cam.torch = !cam.torch;
+      await track.applyConstraints({ advanced: [{ torch: cam.torch }] });
+    } catch (e) { cam.torch = false; toast('เปิดไฟฉายไม่ได้ในเครื่องนี้', true); }
+  }
+
+  // ---------- สแกน QR (ตัวสแกนของ LINE) ----------
+  async function startScan() {
+    if (state.scanning || !state.canScan) return;
+    state.scanning = true;
+    try {
+      do {
+        var r;
+        try { r = await liff.scanCodeV2(); } catch (e) { break; }
+        if (!r || !r.value) break;
+        addScanned(r.value);
+        await new Promise(function (ok) { setTimeout(ok, 350); });
+      } while ($('#cont').checked);
+    } finally {
+      state.scanning = false;
+    }
+  }
+
+  // ---------- ยืม / คืน ----------
+  async function submit(kind) {
+    if (state.busy) return;
+    var s = splitBasket();
+    var ids = kind === 'borrow' ? s.borrow : s.ret;
+    if (!ids.length) return;
+    state.busy = true;
+    renderBar();
+    try {
+      var payload = { ids: ids };
+      if (kind === 'return') payload.note = $('#note').value.trim();
+      var d = await api(kind, payload);
+      state.basket = state.basket.filter(function (id) { return ids.indexOf(id) < 0; });
+      if (kind === 'return') $('#note').value = '';
+      showResults(kind, d.results);
+      await refresh();
+    } catch (e) {
+      toast(e.message, true);
+    } finally {
+      state.busy = false;
+      renderBar();
+    }
+  }
+
+  function showResults(kind, results) {
+    var ok = results.filter(function (r) { return r.ok; }).length;
+    var html = '<h2>' + (kind === 'borrow' ? 'ผลการยืม' : 'ผลการคืน') + ' · สำเร็จ ' + ok + '/' + results.length + '</h2>' +
+      results.map(function (r) {
+        return '<div class="res ' + (r.ok ? 'ok' : 'fail') + '"><span class="mark">' + (r.ok ? '✔' : '✖') + '</span><span>' +
+          '<b>' + esc(r.id) + '</b> ' + esc(r.name || '') + '<br><span style="color:var(--muted)">' + esc(r.msg) + '</span></span></div>';
+      }).join('') +
+      '<div style="margin-top:12px"><button class="btn" id="closeModal" style="width:100%">ปิด</button></div>';
+    $('#sheet').innerHTML = html;
+    $('#modal').classList.add('open');
+  }
+
+  // ---------- เหตุการณ์ ----------
+  $('#list').addEventListener('click', function (e) {
+    var card = e.target.closest('.card');
+    if (!card) return;
+    if (card.getAttribute('aria-disabled') === 'true') {
+      var t = findTool(card.getAttribute('data-id'));
+      if (t) toast(t.id + ' ถูกยืมโดย ' + t.borrower);
+      return;
+    }
+    toggle(card.getAttribute('data-id'));
+  });
+  $('#basket').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-rm]');
+    if (b) toggle(b.getAttribute('data-rm'));
+  });
+  $('#clear').addEventListener('click', function () { state.basket = []; render(); });
+  $('#q').addEventListener('input', function (e) { state.q = e.target.value; render(); });
+  $('#tab-all').addEventListener('click', function () { state.tab = 'all'; render(); });
+  $('#tab-mine').addEventListener('click', function () { state.tab = 'mine'; render(); });
+  $('#chips').addEventListener('click', function (e) {
+    var c = e.target.closest('.chip');
+    if (!c) return;
+    state.filter = c.getAttribute('data-f');
+    Array.prototype.forEach.call(document.querySelectorAll('.chip'), function (x) {
+      x.setAttribute('aria-pressed', x === c ? 'true' : 'false');
+    });
+    render();
+  });
+  $('#refresh').addEventListener('click', function () {
+    refresh().then(function () { toast('อัปเดตแล้ว'); }).catch(function (e) { toast(e.message, true); });
+  });
+  $('#scan').addEventListener('click', startScan);
+  $('#scanFast').addEventListener('click', openCam);
+  $('#camClose').addEventListener('click', closeCam);
+  $('#camTorch').addEventListener('click', toggleTorch);
+  document.addEventListener('visibilitychange', function () { if (document.hidden) closeCam(); });
+  $('#doBorrow').addEventListener('click', function () { submit('borrow'); });
+  $('#doReturn').addEventListener('click', function () { submit('return'); });
+  $('#modal').addEventListener('click', function (e) {
+    if (e.target.id === 'modal' || e.target.id === 'closeModal') $('#modal').classList.remove('open');
+  });
+
+  // ---------- เริ่มทำงาน ----------
+  async function main() {
+    if (/ใส่/.test(CONFIG.LIFF_ID) || /ใส่/.test(CONFIG.API_URL)) {
+      fatal('ยังไม่ได้ตั้งค่า LIFF_ID และ API_URL ในไฟล์ index.html');
+      return;
+    }
+    try {
+      await liff.init({ liffId: CONFIG.LIFF_ID });
+    } catch (e) {
+      fatal('เริ่มต้น LIFF ไม่สำเร็จ: ' + (e && e.message ? e.message : e));
+      return;
+    }
+    if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
+
+    state.canScan = !!(liff.isInClient() && liff.isApiAvailable('scanCodeV2'));
+    $('#scan').hidden = !state.canScan;
+    $('#contWrap').hidden = !state.canScan;
+
+    try {
+      await refresh();
+    } catch (e) {
+      $('#list').innerHTML = '<div class="empty" style="color:var(--bad)">' + esc(e.message) + '</div>';
+      return;
+    }
+
+    // เปิดจากการสแกน QR ด้วยกล้อง/ลิงก์ LIFF (?tool=T001)
+    var deep = parseToolId(location.href, true);
+    if (deep) addScanned(deep);
+  }
+
+  main();
 })();
 </script>
 </body>
